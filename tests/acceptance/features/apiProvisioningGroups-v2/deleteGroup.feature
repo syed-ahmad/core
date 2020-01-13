@@ -72,7 +72,7 @@ Feature: delete groups
     #Then the OCS status code should be "200"
     And the HTTP status code should be "404"
     #And the HTTP status code should be "200"
-    And group "<group_id>" should not exist
+    And group "<group_id>" should exist
     # The following step is needed so that the group does get cleaned up.
     # After fixing issue-31015, remove the following step:
     And the administrator deletes group "<group_id>" using the occ command

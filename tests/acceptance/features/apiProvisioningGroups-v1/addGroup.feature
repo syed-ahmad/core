@@ -67,9 +67,7 @@ Feature: add groups
     When the administrator sends a group creation request for group "<group_id>" using the provisioning API
     Then the OCS status code should be "100"
     And the HTTP status code should be "200"
-    # After fixing issue-31015, change the following step to "should exist"
-    And group "<group_id>" should not exist
-    #And group "<group_id>" should exist
+    And group "<group_id>" should exist
     #
     # The following step is needed so that the group does get cleaned up.
     # After fixing issue-31015, remove the following step:
@@ -91,7 +89,7 @@ Feature: add groups
     Then the OCS status code should be "100"
     #Then the OCS status code should be "101"
     And the HTTP status code should be "200"
-    And group "priv/subadmins" should not exist
+    And group "priv/subadmins" should exist
     # The following step is needed so that the group does get cleaned up.
     # After fixing issue-31015, remove the following step:
     And the administrator deletes group "priv/subadmins" using the occ command

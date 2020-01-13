@@ -34,6 +34,7 @@ use TestHelpers\OcsApiHelper;
 use TestHelpers\SetupHelper;
 use TestHelpers\HttpRequestHelper;
 use TestHelpers\UploadHelper;
+use Zend\Ldap\Ldap;
 
 require_once 'bootstrap.php';
 
@@ -252,6 +253,131 @@ class FeatureContext extends BehatVariablesContext {
 	 * @var string stderr of last command
 	 */
 	private $lastStdErr;
+	/*
+	 * @var Ldap
+	 */
+	private $ldap;
+	private $ldapBaseDN;
+	private $ldapHost;
+	private $ldapPort;
+	private $ldapAdminUser;
+	private $ldapAdminPassword;
+	private $ldapUsersOU;
+	private $ldapGroupsOU;
+	/**
+	 * @var array
+	 */
+	private $toDeleteDNs = [];
+	private $ldapCreatedUsers = [];
+	private $ldapCreatedGroups = [];
+	private $toDeleteLdapConfigs = [];
+	private $oldConfig = [];
+
+	/**
+	 * @return Ldap
+	 */
+	public function getLdap() {
+		return $this->ldap;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getLdapAdminUser() {
+		return $this->ldapAdminUser;
+	}
+
+	/**
+	 * @param string $configId
+	 *
+	 * @return void
+	 */
+	public function setToDeleteLdapConfigs($configId) {
+		$this->toDeleteLdapConfigs = $configId;
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getToDeleteLdapConfigs() {
+		return $this->toDeleteLdapConfigs;
+	}
+
+	/**
+	 * @param string $setValue
+	 *
+	 * @return void
+	 */
+	public function setToDeleteDNs($setValue) {
+		$this->toDeleteDNs = $setValue;
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getOldConfig() {
+		return $this->oldConfig;
+	}
+
+	/**
+	 * @param $configId
+	 * @param $configKey
+	 * @param $value
+	 *
+	 * @return void
+	 */
+	public function setOldConfig($configId, $configKey, $value) {
+		$this->oldConfig[$configId][$configKey] = $value;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getLdapAdminPassword() {
+		return $this->ldapAdminPassword;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getLdapBaseDN() {
+		return $this->ldapBaseDN;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getLdapHost() {
+		return $this->ldapHost;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getLdapHostWithoutScheme() {
+		return $this->removeSchemeFromUrl($this->ldapHost);
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getLdapUsersOU() {
+		return $this->ldapUsersOU;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getLdapGroupsOU() {
+		return $this->ldapGroupsOU;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getLdapPort() {
+		return $this->ldapPort;
+	}
 
 	/**
 	 * BasicStructure constructor.
@@ -2536,6 +2662,11 @@ class FeatureContext extends BehatVariablesContext {
 			$this->getBaseUrl(),
 			$this->getOcPath()
 		);
+
+		if ($this->getLdapTestStatus()) {
+			$suiteParameters = SetupHelper::getSuiteParameters($scope);
+			$this->connectToLdap($suiteParameters);
+		}
 	}
 
 	/**

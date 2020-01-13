@@ -470,6 +470,11 @@ class OccUsersGroupsContext implements Context {
 		$this->occContext->invokingTheCommand(
 			"group:remove-member -m $username $group"
 		);
+		// only for ldap tests
+		if ($this->featureContext->getLdapTestStatus()) {
+			$this->featureContext->removeUserFromLdapGroup($username, $group);
+			$this->featureContext->theLdapUsersHaveBeenReSynced();
+		}
 	}
 
 	/**
@@ -523,6 +528,7 @@ class OccUsersGroupsContext implements Context {
 	 * @param TableNode $useridTable
 	 *
 	 * @return void
+	 * @throws Exception
 	 */
 	public function theUsersReturnedByTheOccCommandShouldBe(TableNode $useridTable) {
 		$this->featureContext->verifyTableNodeColumns($useridTable, ['uid', 'display name']);
