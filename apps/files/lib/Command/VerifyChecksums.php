@@ -156,10 +156,9 @@ class VerifyChecksums extends Command {
 				$output->writeln("<error>Please provide user when path is provided as argument</error>");
 				$this->exitStatus = self::EXIT_INVALID_ARGS;
 				return $this->exitStatus;
-			} else {
-				$output->writeln('<info>This operation might take quite some time.</info>');
-				$this->userManager->callForAllUsers($scanUserFunction);
 			}
+			$output->writeln('<info>This operation might take quite some time.</info>');
+			$this->userManager->callForAllUsers($scanUserFunction);
 		}
 
 		return $this->exitStatus;
@@ -172,13 +171,18 @@ class VerifyChecksums extends Command {
 	 * @param \Closure $callBack
 	 */
 	private function walkNodes(array $nodes, \Closure $callBack) {
+		$folders = [];
 		foreach ($nodes as $node) {
 			if ($node->getType() === FileInfo::TYPE_FOLDER) {
-				'@phan-var \OCP\Files\Folder $node';
-				$this->walkNodes($node->getDirectoryListing(), $callBack);
+				$folders[] = $node;
 			} else {
 				$callBack($node);
 			}
+		}
+		unset($nodes);
+		foreach ($folders as $folder) {
+			'@phan-var \OCP\Files\Folder $folder';
+			$folders[] = $this->walkNodes($folder->getDirectoryListing(), $callBack);
 		}
 	}
 
