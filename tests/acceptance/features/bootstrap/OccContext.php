@@ -591,7 +591,7 @@ class OccContext implements Context {
 	 */
 	public function theCommandFailedWithExitCode($exitCode) {
 		$exitStatusCode = $this->featureContext->getExitStatusCodeOfOccCommand();
-		if ($exitStatusCode !== (int) $exitCode) {
+		if ($exitStatusCode !== (int)$exitCode) {
 			throw new \Exception(
 				"The command was expected to fail with exit code $exitCode but got "
 				. $exitStatusCode
@@ -1226,6 +1226,36 @@ class OccContext implements Context {
 	}
 
 	/**
+	 * @Then the following local storage should be listed:
+	 *
+	 * @param TableNode $table
+	 *
+	 * @return void
+	 * @throws Exception
+	 */
+	public function theFollowingLocalStorageShouldBeListed(TableNode $table) {
+		$expectedLocalStorages = $table->getColumnsHash();
+		$commandOutput = \json_decode($this->featureContext->getStdOutOfOccCommand());
+		foreach ($expectedLocalStorages as $expectedStorageEntry) {
+			$isStorageEntryListed = false;
+			foreach ($commandOutput as $listedStorageEntry) {
+				if ($expectedStorageEntry["MountPoint"] === $listedStorageEntry->mount_point) {
+					Assert::assertEquals($expectedStorageEntry['Storage'], $listedStorageEntry->storage);
+					Assert::assertEquals($expectedStorageEntry['AuthenticationType'], $listedStorageEntry->authentication_type);
+					Assert::assertStringStartsWith($expectedStorageEntry['Configuration'], $listedStorageEntry->configuration);
+					Assert::assertEquals($expectedStorageEntry['Options'], $listedStorageEntry->options);
+					Assert::assertEquals($expectedStorageEntry['ApplicableUsers'], $listedStorageEntry->applicable_users);
+					Assert::assertEquals($expectedStorageEntry['ApplicableGroups'], $listedStorageEntry->applicable_groups);
+					$isStorageEntryListed = true;
+				}
+			}
+			if ($isStorageEntryListed === false) {
+				throw new Exception("Expected local storages not found");
+			}
+		}
+	}
+
+	/**
 	 * @When the administrator deletes local storage :folder using the occ command
 	 *
 	 * @param string $folder
@@ -1658,7 +1688,7 @@ class OccContext implements Context {
 		if ($type === 'boolean') {
 			$value = $value === 'true' ? true : false;
 		} elseif ($type === 'integer') {
-			$value = (int) $value;
+			$value = (int)$value;
 		} elseif ($type === 'json') {
 			// if the expected value of the key is a json
 			// match the value with the regular expression
