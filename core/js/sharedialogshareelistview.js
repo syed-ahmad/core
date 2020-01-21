@@ -45,8 +45,8 @@
 		'			</label>' +
 		'			{{/if}}' +
 		'			{{#if isGroupShare}}' +
-		'			<label for="expiration-{{name}}-{{cid}}-{{shareWith}}">Expire share on: ' +
-		'				<input type="text" id="expiration-{{name}}-{{cid}}-{{shareWith}}" value="{{expirationDate}}" class="expiration expiration-group"/>' +
+		'			<label for="expiration-{{name}}-{{cid}}-{{shareWith}}">Expiration: ' +
+		'				<input type="text" id="expiration-{{name}}-{{cid}}-{{shareWith}}" value="{{expirationDate}}" class="expiration expiration-group" placeholder="Choose an expiration date" />' +
 		'				<button class="removeExpiration">Remove</button>' +
 		'			</label>' +
 		'			{{/if}}' +
