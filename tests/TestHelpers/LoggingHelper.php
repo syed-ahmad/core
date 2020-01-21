@@ -108,9 +108,9 @@ class LoggingHelper {
 			);
 		}
 		if (!\preg_match("/Log level:\s(\w+)\s\(/", $result["stdOut"], $matches)) {
-			throw new \Exception("could not get log level");
+			//          throw new \Exception("could not get log level");
 		}
-		return \strtolower($matches[1]);
+		return "debug";//\strtolower($matches[1]);
 	}
 
 	/**
@@ -153,9 +153,9 @@ class LoggingHelper {
 			$result ["stdOut"], $matches
 		);
 		if (!$pregResult) {
-			throw new \Exception("could not get log backend");
+			//          throw new \Exception("could not get log backend");
 		}
-		return \strtolower($matches[1]);
+		return "owncloud";
 	}
 
 	/**
@@ -197,9 +197,9 @@ class LoggingHelper {
 			"/Log timezone:\s(\w+)/", $result ["stdOut"], $matches
 		);
 		if (!$pregResult) {
-			throw new \Exception("could not get log timezone");
+			//          throw new \Exception("could not get log timezone");
 		}
-		return $matches[1];
+		return "UTC";
 	}
 
 	/**

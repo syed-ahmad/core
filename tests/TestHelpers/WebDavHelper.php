@@ -334,10 +334,10 @@ class WebDavHelper {
 			return "remote.php/dav/archive/$user/files";
 		}
 		if ($davPathVersionToUse === 1) {
-			return "remote.php/webdav/";
+			return "remote.php/webdav/home/";
 		} elseif ($davPathVersionToUse === 2) {
 			if ($type === "files") {
-				return "remote.php/dav" . '/files/' . $user . "/";
+				return "remote.php/dav" . '/files/oc/' . $user . "/";
 			} else {
 				return "remote.php/dav";
 			}

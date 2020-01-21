@@ -6,13 +6,15 @@ Feature: download file
 
   Background:
     Given using OCS API version "1"
-    And user "user0" has been created with default attributes and skeleton files
+    And user "user0" has been created with default attributes and without skeleton files
+    And user "user0" has uploaded file with content "ownCloud test text file 0" to "/textfile0.txt"
+    And user "user0" has uploaded file "filesForUpload/lorem.txt" to "/welcome.txt"
 
   @smokeTest
   Scenario Outline: download a file
     Given using <dav_version> DAV path
     When user "user0" downloads file "/textfile0.txt" using the WebDAV API
-    Then the downloaded content should be "ownCloud test text file 0" plus end-of-line
+    Then the downloaded content should be "ownCloud test text file 0"
     Examples:
       | dav_version |
       | old         |

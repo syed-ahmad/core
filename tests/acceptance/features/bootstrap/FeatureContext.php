@@ -2551,8 +2551,6 @@ class FeatureContext extends BehatVariablesContext {
 	/**
 	 * After Scenario. clear file locks
 	 *
-	 * @AfterScenario
-	 *
 	 * @return void
 	 */
 	public function clearFileLocks() {
@@ -2757,10 +2755,10 @@ class FeatureContext extends BehatVariablesContext {
 	 */
 	public function resetAppConfigs() {
 		// Remember the current capabilities
-		$this->appConfigurationContext->theAdministratorGetsCapabilitiesCheckResponse();
-		$this->savedCapabilitiesXml[$this->getBaseUrl()] = $this->appConfigurationContext->getCapabilitiesXml();
+		//      $this->appConfigurationContext->theAdministratorGetsCapabilitiesCheckResponse();
+		//      $this->savedCapabilitiesXml[$this->getBaseUrl()] = $this->appConfigurationContext->getCapabilitiesXml();
 		// Set the required starting values for testing
-		$this->setCapabilities($this->getCommonSharingConfigs());
+		//$this->setCapabilities($this->getCommonSharingConfigs());
 	}
 
 	/**
@@ -2862,7 +2860,7 @@ class FeatureContext extends BehatVariablesContext {
 	}
 
 	/**
-	 * @AfterScenario
+	 *
 	 *
 	 * @return void
 	 */

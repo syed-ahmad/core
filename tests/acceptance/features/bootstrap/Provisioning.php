@@ -1540,8 +1540,27 @@ trait Provisioning {
 	 * @throws \Exception
 	 */
 	public function deleteUser($user) {
-		$this->deleteTheUserUsingTheProvisioningApi($user);
+		if (\getenv("TEST_OCIS") === "true") {
+			$userDataFolder = \getenv("OCIS_REVA_DATA_ROOT") . "/data/" . $user;
+			$this->recurseRmdir($userDataFolder);
+		} else {
+			$this->deleteTheUserUsingTheProvisioningApi($user);
+		}
+
 		$this->userShouldNotExist($user);
+	}
+
+	/**
+	 * @param string $dir
+	 *
+	 * @return bool
+	 */
+	public function recurseRmdir($dir) {
+		$files = \array_diff(\scandir($dir), ['.','..']);
+		foreach ($files as $file) {
+			(\is_dir("$dir/$file")) ? $this->recurseRmdir("$dir/$file") : \unlink("$dir/$file");
+		}
+		return \rmdir($dir);
 	}
 
 	/**
@@ -3025,7 +3044,7 @@ trait Provisioning {
 	}
 
 	/**
-	 * @BeforeScenario
+	 *
 	 *
 	 * @return void
 	 */
@@ -3043,7 +3062,7 @@ trait Provisioning {
 	}
 
 	/**
-	 * @AfterScenario
+	 *
 	 *
 	 * @return void
 	 */

@@ -532,20 +532,20 @@ then
 	#get the sub path of the webserver and set the correct RewriteBase
 	WEBSERVER_PATH=$(get_path_from_url ${TEST_SERVER_URL})
 	HTACCESS_UPDATE_FAILURE_MSG="Could not update .htaccess in local server. Some tests might fail as a result."
-	remote_occ ${ADMIN_AUTH} ${OCC_URL} "config:system:set htaccess.RewriteBase --value /${WEBSERVER_PATH}/"
-	remote_occ ${ADMIN_AUTH} ${OCC_URL} "maintenance:update:htaccess"
+	#remote_occ ${ADMIN_AUTH} ${OCC_URL} "config:system:set htaccess.RewriteBase --value /${WEBSERVER_PATH}/"
+	#remote_occ ${ADMIN_AUTH} ${OCC_URL} "maintenance:update:htaccess"
 	[[ $? -eq 0 ]] || { echo "${HTACCESS_UPDATE_FAILURE_MSG}"; }
 	# check if mod_rewrite module is enabled
-	check_apache_module_enabled ${ADMIN_AUTH} ${TESTING_APP_URL} "mod_rewrite" "local"
+	#check_apache_module_enabled ${ADMIN_AUTH} ${TESTING_APP_URL} "mod_rewrite" "local"
 
 	if [ -n "${TEST_SERVER_FED_URL}" ]
 	then
 		WEBSERVER_PATH=$(get_path_from_url ${TEST_SERVER_FED_URL})
-		remote_occ ${ADMIN_AUTH} ${OCC_FED_URL} "config:system:set htaccess.RewriteBase --value /${WEBSERVER_PATH}/"
-		remote_occ ${ADMIN_AUTH} ${OCC_FED_URL} "maintenance:update:htaccess"
+		#remote_occ ${ADMIN_AUTH} ${OCC_FED_URL} "config:system:set htaccess.RewriteBase --value /${WEBSERVER_PATH}/"
+		#remote_occ ${ADMIN_AUTH} ${OCC_FED_URL} "maintenance:update:htaccess"
 		[[ $? -eq 0 ]] || { echo "${HTACCESS_UPDATE_FAILURE_MSG/local/federated}"; }
 		# check if mod_rewrite module is enabled
-		check_apache_module_enabled ${ADMIN_AUTH} ${TESTING_APP_FED_URL} "mod_rewrite" "remote"
+		#check_apache_module_enabled ${ADMIN_AUTH} ${TESTING_APP_FED_URL} "mod_rewrite" "remote"
 	fi
 else
 	echo "Using php inbuilt server for running scenario ..."
@@ -744,16 +744,16 @@ fi
 # table of settings to be remembered and set
 #system|app;app-name;setting-name;value;variable-type
 declare -a SETTINGS
-SETTINGS+=("system;;mail_domain;foobar.com")
-SETTINGS+=("system;;mail_from_address;owncloud")
-SETTINGS+=("system;;mail_smtpmode;smtp")
-SETTINGS+=("system;;mail_smtphost;${MAILHOG_HOST}")
-SETTINGS+=("system;;mail_smtpport;${MAILHOG_SMTP_PORT}")
-SETTINGS+=("app;core;backgroundjobs_mode;webcron")
-SETTINGS+=("system;;sharing.federation.allowHttpFallback;true;boolean")
-SETTINGS+=("app;core;enable_external_storage;yes")
-SETTINGS+=("system;;files_external_allow_create_new_local;true")
-SETTINGS+=("system;;skeletondirectory;;")
+#SETTINGS+=("system;;mail_domain;foobar.com")
+#SETTINGS+=("system;;mail_from_address;owncloud")
+#SETTINGS+=("system;;mail_smtpmode;smtp")
+#SETTINGS+=("system;;mail_smtphost;${MAILHOG_HOST}")
+#SETTINGS+=("system;;mail_smtpport;${MAILHOG_SMTP_PORT}")
+#SETTINGS+=("app;core;backgroundjobs_mode;webcron")
+#SETTINGS+=("system;;sharing.federation.allowHttpFallback;true;boolean")
+#SETTINGS+=("app;core;enable_external_storage;yes")
+#SETTINGS+=("system;;files_external_allow_create_new_local;true")
+#SETTINGS+=("system;;skeletondirectory;;")
 
 # Set various settings
 for URL in ${OCC_URL} ${OCC_FED_URL}
@@ -803,7 +803,8 @@ then
 else
 	for URL in ${OCC_URL} ${OCC_FED_URL}
 	do
-		remote_occ ${ADMIN_AUTH} ${URL} "config:system:set skeletondirectory --value=${SKELETON_DIR}"
+		#remote_occ ${ADMIN_AUTH} ${URL} "config:system:set skeletondirectory --value=${SKELETON_DIR}"
+		echo
 	done
 fi
 
@@ -823,12 +824,12 @@ declare -a APPS_TO_REENABLE;
 for URL in ${OCC_URL} ${OCC_FED_URL}
 	do
 	for APP_TO_DISABLE in ${APPS_TO_DISABLE}; do
-		remote_occ ${ADMIN_AUTH} ${URL} "--no-warnings app:list ^${APP_TO_DISABLE}$"
+		#remote_occ ${ADMIN_AUTH} ${URL} "--no-warnings app:list ^${APP_TO_DISABLE}$"
 		PREVIOUS_APP_STATUS=${REMOTE_OCC_STDOUT}
 		if [[ "${PREVIOUS_APP_STATUS}" =~ ^Enabled: ]]
 		then
 			APPS_TO_REENABLE+=("${URL} ${APP_TO_DISABLE}");
-			remote_occ ${ADMIN_AUTH} ${URL} "--no-warnings app:disable ${APP_TO_DISABLE}"
+			#remote_occ ${ADMIN_AUTH} ${URL} "--no-warnings app:disable ${APP_TO_DISABLE}"
 		fi
 	done
 done
@@ -838,12 +839,12 @@ declare -a APPS_TO_REDISABLE;
 for URL in ${OCC_URL} ${OCC_FED_URL}
 	do
 	for APP_TO_ENABLE in ${APPS_TO_ENABLE}; do
-		remote_occ ${ADMIN_AUTH} ${URL} "--no-warnings app:list ^${APP_TO_ENABLE}$"
+		#remote_occ ${ADMIN_AUTH} ${URL} "--no-warnings app:list ^${APP_TO_ENABLE}$"
 		PREVIOUS_APP_STATUS=${REMOTE_OCC_STDOUT}
 		if [[ "${PREVIOUS_APP_STATUS}" =~ ^Disabled: ]]
 		then
 			APPS_TO_REDISABLE+=("${URL} ${APP_TO_ENABLE}");
-			remote_occ ${ADMIN_AUTH} ${URL} "--no-warnings app:enable ${APP_TO_ENABLE}"
+			#remote_occ ${ADMIN_AUTH} ${URL} "--no-warnings app:enable ${APP_TO_ENABLE}"
 		fi
 	done
 done

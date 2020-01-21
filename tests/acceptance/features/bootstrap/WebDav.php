@@ -255,9 +255,7 @@ trait WebDav {
 	 * @return string
 	 */
 	public function getFullDavFilesPath($user) {
-		return \ltrim(
-			$this->getBasePath() . "/" . $this->getDavFilesPath($user), "/"
-		);
+		return \rtrim(WebDavHelper::getDavPath($user, $this->getDavPathVersion()), "/");
 	}
 
 	/**

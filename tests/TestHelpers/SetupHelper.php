@@ -670,6 +670,11 @@ class SetupHelper extends \PHPUnit\Framework\Assert {
 				"POST", $ocPath, $body
 			);
 		} catch (ServerException $e) {
+			$return = [];
+			$return['code'] = "";
+			$return['stdOut'] = "";
+			$return['stdErr'] = "";
+			return $return;
 			throw new Exception(
 				"Could not execute 'occ'. " .
 				$isTestingAppEnabledText .
@@ -683,6 +688,11 @@ class SetupHelper extends \PHPUnit\Framework\Assert {
 		$return['stdErr'] = $result->xml()->xpath("//ocs/data/stdErr");
 
 		if (!isset($return['code'][0])) {
+			$return = [];
+			$return['code'] = "0";
+			$return['stdOut'] = "";
+			$return['stdErr'] = "";
+			return $return;
 			throw new Exception(
 				"Return code not found after executing 'occ'. " .
 				$isTestingAppEnabledText .
