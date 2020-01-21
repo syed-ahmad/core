@@ -476,45 +476,41 @@ trait Provisioning {
 	 *
 	 * @return array
 	 */
-	public function setAttributesForUser($setDefaultAttributes, $table) {
-		$bodies = [];
+	public function buildUsersAttributesArray($setDefaultAttributes, $table) {
+		$usersAttributes = [];
 		foreach ($table as $row) {
-			$body['userid'] = $this->getActualUsername($row['username']);
+			$userAttribute['userid'] = $this->getActualUsername($row['username']);
 			if (isset($row['displayname'])) {
-				$body['displayName'] = $row['displayname'];
+				$userAttribute['displayName'] = $row['displayname'];
 			} elseif ($setDefaultAttributes) {
-				$body['displayName'] = $this->getDisplayNameForUser($body['userid']);
-				if ($body['displayName'] === null) {
-					$body['displayName'] = $this->getDisplayNameForUser('regularuser');
+				$userAttribute['displayName'] = $this->getDisplayNameForUser($userAttribute['userid']);
+				if ($userAttribute['displayName'] === null) {
+					$userAttribute['displayName'] = $this->getDisplayNameForUser('regularuser');
 				}
-			} elseif ($this->getLdapTestStatus() && !$setDefaultAttributes) {
-				$body["displayName"] = $row["username"];
 			} else {
-				$body['displayName'] = null;
+				$userAttribute['displayName'] = null;
 			}
 
 			if (isset($row['email'])) {
-				$body['email'] = $row['email'];
+				$userAttribute['email'] = $row['email'];
 			} elseif ($setDefaultAttributes) {
-				$body['email'] = $this->getEmailAddressForUser($body['userid']);
-				if ($body['email'] === null) {
-					$body['email'] = $row['username'] . '@owncloud.org';
+				$userAttribute['email'] = $this->getEmailAddressForUser($userAttribute['userid']);
+				if ($userAttribute['email'] === null) {
+					$userAttribute['email'] = $row['username'] . '@owncloud.org';
 				}
-			} elseif ($this->getLdapTestStatus() === true && !$setDefaultAttributes) {
-				$body["email"] = $row["username"] . "@oc.com.np";
 			} else {
-				$body['email'] = null;
+				$userAttribute['email'] = null;
 			}
 
 			if (isset($row['password'])) {
-				$body['password'] = $this->getActualPassword($row['password']);
+				$userAttribute['password'] = $this->getActualPassword($row['password']);
 			} else {
-				$body['password'] = $this->getPasswordForUser($row['username']);
+				$userAttribute['password'] = $this->getPasswordForUser($row['username']);
 			}
 			// Add request body to the bodies array. we will use that later to loop through created users.
-			\array_push($bodies, $body);
+			\array_push($usersAttributes, $userAttribute);
 		}
-		return $bodies;
+		return $usersAttributes;
 	}
 
 	/**
@@ -533,13 +529,17 @@ trait Provisioning {
 		$uidNumber = \count($this->ldapCreatedUsers) + 1;
 		$entry = [];
 		$entry['cn'] = $setting["userid"];
-		$entry['sn'] = $setting["displayName"];
+		$entry['sn'] = $setting["userid"];
 		$entry['homeDirectory'] = '/home/openldap/' . $setting["userid"];
 		$entry['objectclass'][] = 'posixAccount';
 		$entry['objectclass'][] = 'inetOrgPerson';
 		$entry['userPassword'] = $setting["password"];
-		$entry['displayName'] = $setting["displayName"];
-		$entry['mail'] = $setting["email"];
+		if (isset($setting["displayName"])) {
+			$entry['displayName'] = $setting["displayName"];
+		}
+		if (isset($setting["email"])) {
+			$entry['mail'] = $setting["email"];
+		}
 		$entry['gidNumber'] = 5000;
 		$entry['uidNumber'] = $uidNumber;
 		$this->ldap->add($newDN, $entry);
@@ -625,7 +625,7 @@ trait Provisioning {
 	 * @return void
 	 * @throws Exception
 	 */
-	public function deleteLdapUserAndGroups() {
+	public function deleteLdapUsersAndGroups() {
 		//delete created ldap users
 		$this->ldap->delete(
 			"ou=" . $this->ldapUsersOU . "," . $this->ldapBaseDN, true
@@ -649,7 +649,7 @@ trait Provisioning {
 	 * @return void
 	 * @throws Exception
 	 */
-	public function resetOldConfig() {
+	public function resetOldLdapConfig() {
 		$toDeleteLdapConfig = $this->getToDeleteLdapConfigs();
 		foreach ($toDeleteLdapConfig as $configId) {
 			SetupHelper::runOcc(['ldap:delete-config', $configId]);
@@ -669,25 +669,25 @@ trait Provisioning {
 	 */
 	public function afterScenario() {
 		if ($this->getLdapTestStatus()) {
-			$this->deleteLdapUserAndGroups();
-			$this->resetOldConfig();
+			$this->deleteLdapUsersAndGroups();
+			$this->resetOldLdapConfig();
 		}
 	}
 
 	/**
 	 * @param boolean $initialize
-	 * @param array $bodies
+	 * @param array $usersAttributes
 	 *
 	 * @return void
 	 * @throws Exception
 	 */
-	public function usersHaveBeenCreated($initialize, $bodies) {
+	public function usersHaveBeenCreated($initialize, $usersAttributes) {
 		$requests = [];
 		$client = new Client();
 
-		foreach ($bodies as $body) {
+		foreach ($usersAttributes as $userAttribute) {
 			if ($this->getLdapTestStatus()) {
-				$this->createLdapUser($body);
+				$this->createLdapUser($userAttribute);
 			} else {
 				// Create a OCS request for creating the user. The request is not sent to the server yet.
 				$request = OcsApiHelper::createOcsRequest(
@@ -696,7 +696,7 @@ trait Provisioning {
 					$this->getAdminPassword(),
 					'POST',
 					"/cloud/users",
-					$body,
+					$userAttribute,
 					$client
 				);
 				// Add the request to the $requests array so that they can be sent in parallel.
@@ -727,7 +727,7 @@ trait Provisioning {
 		// These values cannot be set while creating the user, so we have to edit the newly created user to set these values.
 		$users = [];
 		$editData = [];
-		foreach ($bodies as $user) {
+		foreach ($usersAttributes as $user) {
 			\array_push($users, $user['userid']);
 			$this->addUserToCreatedUsersList($user['userid'], $user['password'], $user['displayName'], $user['email']);
 			if (isset($user['displayName'])) {
@@ -775,12 +775,12 @@ trait Provisioning {
 		$table = $table->getColumnsHash();
 		$setDefaultAttributes = $setDefaultAttributes !== "";
 		$initialize = $doNotInitialize === "";
-		$bodies = $this->setAttributesForUser($setDefaultAttributes, $table);
+		$usersAttributes = $this->buildUsersAttributesArray($setDefaultAttributes, $table);
 		$this->usersHaveBeenCreated(
 			$initialize,
-			$bodies
+			$usersAttributes
 		);
-		foreach ($bodies as $expectedUser) {
+		foreach ($usersAttributes as $expectedUser) {
 			$this->userShouldExist($expectedUser["userid"]);
 		}
 	}
@@ -1119,22 +1119,13 @@ trait Provisioning {
 	}
 
 	/**
-	 * Edit the "display name" of a user by sending the key "displayname" to the API end point.
-	 *
-	 * This is the newer and consistent key name.
-	 *
-	 * @see https://github.com/owncloud/core/pull/33040
-	 *
-	 * @When /^the administrator changes the display name of user "([^"]*)" to "([^"]*)" using the provisioning API$/
-	 * @Given /^the administrator has changed the display name of user "([^"]*)" to "([^"]*)"$/
-	 *
 	 * @param string $user
 	 * @param string $displayname
 	 *
 	 * @return void
 	 * @throws Exception
 	 */
-	public function adminChangesTheDisplayNameOfUserUsingTheProvisioningApi(
+	public function changeTheDisplayNameOfUserUsingTheProvisioningApi(
 		$user, $displayname
 	) {
 		if ($this->getLdapTestStatus()) {
@@ -1148,6 +1139,51 @@ trait Provisioning {
 		}
 	}
 
+	/**
+	 * Edit the "display name" of a user by sending the key "displayname" to the API end point.
+	 *
+	 * This is the newer and consistent key name.
+	 *
+	 * @see https://github.com/owncloud/core/pull/33040
+	 *
+	 * @When /^the administrator changes the display name of user "([^"]*)" to "([^"]*)" using the provisioning API$/
+	 *
+	 * @param string $user
+	 * @param string $displayname
+	 *
+	 * @return void
+	 * @throws Exception
+	 */
+	public function adminChangesTheDisplayNameOfUserUsingTheProvisioningApi(
+		$user, $displayname
+	) {
+		$this->adminChangesTheDisplayNameOfUserUsingKey(
+			$user, 'displayname', $displayname
+		);
+	}
+
+	/**
+	 * @Given /^the administrator has changed the display name of user "([^"]*)" to "([^"]*)"$/
+	 *
+	 * @param string $user
+	 * @param string $displayname
+	 *
+	 * @return void
+	 * @throws Exception
+	 */
+	public function adminHasChangedTheDisplayNameOfUser(
+		$user, $displayname
+	) {
+		if ($this->getLdapTestStatus()) {
+			$this->editLdapUserDisplayName(
+				$user, $displayname
+			);
+		} else {
+			$this->adminChangesTheDisplayNameOfUserUsingKey(
+				$user, 'displayname', $displayname
+			);
+		}
+	}
 	/**
 	 * As the administrator, edit the "display name" of a user by sending the key "display" to the API end point.
 	 *
@@ -2061,8 +2097,6 @@ trait Provisioning {
 	 * @throws \Exception
 	 */
 	public function userHasBeenAddedToGroup($user, $group) {
-		$this->groupShouldExist($group);
-		$this->userShouldExist($user);
 		$this->addUserToGroup($user, $group, null, true);
 	}
 
@@ -2241,6 +2275,9 @@ trait Provisioning {
 		foreach ($table as $row) {
 			\array_push($expectedGroups, $row["groupname"]);
 			$this->createTheGroup($row["groupname"]);
+		}
+		foreach ($expectedGroups as $group) {
+			$this->groupShouldExist($group);
 		}
 	}
 
@@ -2608,7 +2645,7 @@ trait Provisioning {
 	}
 
 	/**
-	 * @When /^the administrator deletes group "([^"]*)"$/
+	 * @When /^the administrator deletes group "([^"]*)" from the default user backend$/
 	 *
 	 * @param string $group
 	 *
@@ -2680,25 +2717,29 @@ trait Provisioning {
 			$fullUrl, $this->getAdminUsername(), $this->getAdminPassword()
 		);
 		if ($this->response->getStatusCode() >= 400) {
-			$occResponse = SetupHelper::runOcc(
-				[
-					"group:list --output=json"
-				]
-			);
-			$occGroupList = \json_decode($occResponse["stdOut"], true);
-			if (!\in_array(
-				\rawurldecode($group),
-				$occGroupList
-			)
-			) {
-				return false;
-			}
+			return false;
 		}
 		return true;
 	}
+
+	/**
+	 * @param string $user
+	 * @param string $group
+	 *
+	 * @return void
+	 * @throws Exception
+	 */
+	public function removeUserFromGroupUsingTheProvisioningApi($user, $group) {
+		if ($this->getLdapTestStatus()) {
+			$this->removeUserFromLdapGroup($user, $group);
+		}
+		$this->userRemovesUserFromGroupUsingTheProvisioningApi(
+			$this->getAdminUsername(), $user, $group
+		);
+	}
+
 	/**
 	 * @When the administrator removes user :user from group :group using the provisioning API
-	 * @Given user :user has been removed from group :group
 	 *
 	 * @param string $user
 	 * @param string $group
@@ -2707,8 +2748,24 @@ trait Provisioning {
 	 * @throws Exception
 	 */
 	public function adminRemovesUserFromGroupUsingTheProvisioningApi($user, $group) {
+		$this->removeUserFromGroupUsingTheProvisioningApi(
+			$user, $group
+		);
+	}
+
+	/**
+	 * @Given user :user has been removed from group :group
+	 *
+	 * @param string $user
+	 * @param string $group
+	 *
+	 * @return void
+	 * @throws Exception
+	 */
+	public function adminHasRemovedUserFromGroup($user, $group) {
 		if ($this->getLdapTestStatus()) {
 			$this->removeUserFromLdapGroup($user, $group);
+			return;
 		}
 		$this->userRemovesUserFromGroupUsingTheProvisioningApi(
 			$this->getAdminUsername(), $user, $group

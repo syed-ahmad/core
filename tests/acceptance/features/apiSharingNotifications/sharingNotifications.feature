@@ -142,6 +142,6 @@ Feature: Display notifications when receiving a share
   Scenario: discard notification if group is deleted
     Given parameter "shareapi_auto_accept_share" of app "core" has been set to "no"
     When user "user0" shares folder "/PARENT" with group "grp1" using the sharing API
-    And the administrator deletes group "grp1"
+    And the administrator deletes group "grp1" from the default user backend
     Then user "user1" should have 0 notifications
     Then user "user2" should have 0 notifications
